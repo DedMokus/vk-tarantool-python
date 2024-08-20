@@ -19,6 +19,7 @@ TNT_PASSWORD = os.getenv("DB_USER_PASSWORD")
 app = FastAPI()
 
 
+
 async def get_tarantool_connection():
     try:
         conn = asynctnt.Connection(host="tarantool-storage", port=3301, username=TNT_USER, password=TNT_PASSWORD)
@@ -28,10 +29,13 @@ async def get_tarantool_connection():
         await conn.disconnect()
         conn.close()
 
-users = [('admin', 'presale')]
+users = {}
 
-def check_user(username, password):
-    if (username, password) in users:
+users.update({'admin':'presale'})
+
+
+def check_user(username):
+    if username in users.keys():
         return True
 
 def token_response(token: str):
@@ -92,15 +96,25 @@ class JWTBearer(HTTPBearer):
 
         return isTokenValid
 
+@app.post("/app/register")
+async def register(user: UserSchema):
+    if not check_user(user.username):
+        users.update({user.username: user.password})
+        return {"status": "success", "username": user.username}
+    else:
+        raise HTTPException(status_code=405, detail="This username already exists")
+
 
 @app.post("/app/login")
 async def login(user: UserSchema):
-    if check_user(user.username, user.password):
-        return sign_jwt(user.username)
+    if check_user(user.username):
+        if users[user.username]==user.password:
+            return sign_jwt(user.username)
+        else:
+            raise HTTPException(status_code=403, detail="Invalid username or password")
     else:
-        return HTTPException(status_code=403, detail="Invalid username or password")
+        raise HTTPException(status_code=403, detail="Invalid username or password")
     
-
 
 @app.post("/app/write", dependencies=[Depends(JWTBearer())])
 async def tnt_insert(data: DataModelWrite, conn=Depends(get_tarantool_connection)):
@@ -108,9 +122,8 @@ async def tnt_insert(data: DataModelWrite, conn=Depends(get_tarantool_connection
         res = [await conn.insert('kv', item) for item in list(data.data.items())]
         return {"status": "success"}
     except asynctnt.exceptions.TarantoolDatabaseError as e:
-        return {"Database Error": e.message}
-
-    
+        raise HTTPException(status_code=e.code, detail=e.message)
+        
 
 @app.post("/app/read", dependencies=[Depends(JWTBearer())])
 async def tnt_select(keys: DataModelRead, conn=Depends(get_tarantool_connection)):
@@ -123,5 +136,5 @@ async def tnt_select(keys: DataModelRead, conn=Depends(get_tarantool_connection)
             else:
                 data["data"].update(response)
         return data
-    except Exception as e:
-        return e
+    except asynctnt.exceptions.TarantoolDatabaseError as e:
+        raise HTTPException(status_code=e.code, detail=e.message)

@@ -2,3 +2,6 @@ fastapi
 PyJWT
 asynctnt
 asyncio
+pytest
+httpx
+pytest-asyncio
