@@ -1,0 +1,4 @@
+fastapi
+PyJWT
+asynctnt
+asyncio

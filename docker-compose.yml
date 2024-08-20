@@ -1,0 +1,32 @@
+version: '3.8'
+services:
+  tarantool-storage:
+    build: ./tarantool
+    ports:
+      - "8081:8081"
+      - "3301:3301"
+    networks:
+      - tarantooldb_network
+    environment:
+      - DB_USER_NAME=admin
+      - DB_USER_PASSWORD=presale
+  
+  app:
+    build: ./app
+    links:
+      - tarantool-storage
+    ports:
+      - "8000:8000"
+    depends_on:
+      - tarantool-storage
+    environment:
+      - SECRET_KEY=please_update
+      - ALGORITHM=HS256
+      - DB_USER_NAME=admin
+      - DB_USER_PASSWORD=presale
+    networks:
+      - tarantooldb_network
+
+networks:
+  tarantooldb_network:
+
