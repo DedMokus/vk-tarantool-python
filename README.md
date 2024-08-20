@@ -76,7 +76,7 @@ curl -X POST http://localhost:8000/login \
 ### Write data
 
 ```bash
-curl -X GET "http://localhost:8080/\
+curl -X POST "http://localhost:8080/\
             -H 'accept: application/json' \
             -H 'Authorization: Bearer <JWT_TOKEN>' \
             -H 'Content-Type: application/json' \
@@ -135,6 +135,8 @@ This API provides following error codes:
 - 422: Data format error
 
 ### Tests
+
+You can run tests with this command:
 
 ```bash
     docker-compose exec app pytest
