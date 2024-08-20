@@ -43,7 +43,7 @@ The marketplace service is accessible at `http://localhost:8000` after startup.
 - **POST `/login`**: Authenticate existing users.
 - **POST `/register`**: Register new users.
 - **POST `/read`**: Read values by keys (JWT authentication required).
-- **GET `/write`**: Write key-value pairs to database(JWT authentication required).
+- **POST `/write`**: Write key-value pairs to database(JWT authentication required).
 
 ## Example Commands & Test Data
 
